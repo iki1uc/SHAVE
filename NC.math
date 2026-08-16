@@ -1,0 +1,11 @@
+// NC.math — Verteilungs-Berechnung
+// Mystery: Höhe = Berechnung, Breite = alle Moves, Tiefe = alle Ebenen
+
+export function calcDistribution(impulse) {
+    return {
+        height: "mystery-calc",
+        width: "mystery-all",
+        depth: "mystery-all",
+        checksum: impulse.length * 7
+    };
+}
