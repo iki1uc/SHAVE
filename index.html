@@ -1,91 +1,81 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>BEN • UNI‑RESPO Engine</title>
+    <meta charset="UTF-8">
+    <title>SHAVE Station — Verteiler</title>
 
-<style>
-body {
-  background:#000;
-  color:#eee;
-  font-family:Consolas, monospace;
-  padding:20px;
-}
-h1,h2 {
-  color:#00e0ff;
-  text-shadow:0 0 10px #00e0ff;
-}
-.block {
-  border:1px solid #00e0ff;
-  padding:15px;
-  margin:20px 0;
-  border-radius:8px;
-  background:#111;
-}
-.matrix {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-.axis8 {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-}
-.cell {
-  padding:10px;
-  background:#222;
-  border:1px solid #333;
-  text-align:center;
-  border-radius:6px;
-}
-.scanbox {
-  background:#222;
-  border:1px solid #444;
-  padding:10px;
-  margin-top:10px;
-}
-.verify {
-  background:#1a1a1a;
-  border:1px solid #5500ff;
-  padding:10px;
-  margin-top:10px;
-}
-</style>
+    <!-- Selbe JS-Dateien, selbe Höhe -->
+    <script type="module" src="shell.js"></script>
+    <script type="module" src="gicik.js"></script>
+    <script type="module" src="zwick.js"></script>
+    <script type="module" src="nerdCharm.js"></script>
+    <script type="module" src="nohero.js"></script>
+    <script type="module" src="NC.math"></script>
+
+    <style>
+        body {
+            background: #0f0f0f;
+            color: #e0e0e0;
+            font-family: monospace;
+            padding: 40px;
+        }
+        .title {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        .log {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-left: 4px solid #4af;
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>BEN‑RESPO • UNI‑RESPO • WELT‑RESPO</h1>
+<div class="title">SHAVE Station — Verteiler aktiv</div>
 
-<!-- FUNKTION.matrix -->
-<div class="block">
-  <h2>FUNKTION.matrix</h2>
-  <p>Achsen: TMP / TRANS / WARB<br>
-     Felder: WLOCH / KANAL / GATE</p>
+<div class="log" id="log">Starte Mystery‑Verteilung…</div>
 
-  <div class="matrix">
-    <div class="cell">TMP.WLOCH</div>
-    <div class="cell">TMP.KANAL</div>
-    <div class="cell">TMP.GATE</div>
+<script type="module">
+    import { Shell } from "./shell.js";
+    import { gicik } from "./gicik.js";
+    import { zwick } from "./zwick.js";
+    import { charm } from "./nerdCharm.js";
+    import { nohero } from "./nohero.js";
+    import { calcDistribution } from "./NC.math";
 
-    <div class="cell">TRANS.WLOCH</div>
-    <div class="cell">TRANS.KANAL</div>
-    <div class="cell">TRANS.GATE</div>
+    const log = document.getElementById("log");
 
-    <div class="cell">WARB.WLOCH</div>
-    <div class="cell">WARB.KANAL</div>
-    <div class="cell">WARB.GATE</div>
-  </div>
-</div>
+    function out(x) {
+        log.innerHTML += "<br>" + JSON.stringify(x);
+    }
 
-<!-- BEN‑Axiom‑System -->
-<div class="block">
-  <h2>BEN‑Axiom‑System</h2>
-  <div class="matrix">
-    <div class="cell">BEN</div>
-    <div class="cell">BEN.tmp</div>
-    <div class="cell">BEN.trans</div>
+    // HÜA HOT START — Verteiler-Impuls
+    const essoOut = Shell.distribute("ESSO");
+    out(essoOut);
 
-    <div class="cell">BEN.warb</div>
-    <div class="cell">BEN‑NC3×3</div>
+    const rollerOut = zwick("ROLLER");
+    out(rollerOut);
+
+    const kasseOut = charm("KASSE");
+    out(kasseOut);
+
+    const doorOut = gicik("DOOR");
+    out(doorOut);
+
+    const dooOut = nohero("DOO");
+    out(dooOut);
+
+    const shellOut = Shell.distribute("SHELL");
+    out(shellOut);
+
+    // Mystery-Berechnung
+    const mysteryCalc = calcDistribution("SHAVE-MYSTERY");
+    out(mysteryCalc);
+
+</script>
+
+</body>
+</html>
