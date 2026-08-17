@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SHAVE · VERTEILER · 6 MOVES</title>
+<title>SHAVE · STATION · VERTEILER · 6 MOVES</title>
 
 <style>
 :root {
@@ -294,7 +294,7 @@ button.danger:hover { background: #f44; color: #000; }
 
 <script>
 // ============================================================
-// SHAVE · VERTEILER · 6 MOVES
+// SHAVE · VERTEILER · 6 MOVES · ALLES IN EINER DATEI
 // ============================================================
 
 // --- MOVES ---
@@ -309,7 +309,7 @@ var MOVES = {
 var MOVE_KEYS = ['ESSO', 'ROLLER', 'KASSE', 'DOOR', 'DOO', 'SHELL'];
 
 // --- MYSTERY-VERTEILER ---
-function distribute(move, value) {
+function distribute(move) {
     var map = {
         ESSO:   { height: 'high', width: 'wide', depth: 'deep' },
         ROLLER: { height: 'mid', width: 'mid', depth: 'flat' },
@@ -386,6 +386,8 @@ function log(msg, type) {
 function activateMove(key) {
     state.activeMove = key;
     var move = MOVES[key];
+
+    // UI aktualisieren
     var els = document.querySelectorAll('.move');
     for (var i = 0; i < els.length; i++) {
         var el = els[i];
@@ -397,7 +399,7 @@ function activateMove(key) {
     }
 
     // Verteilen
-    var dist = distribute(key, state.t);
+    var dist = distribute(key);
     state.values[key] = (state.values[key] || 0) + 1;
 
     // Metriken
