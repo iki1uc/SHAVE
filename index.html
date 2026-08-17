@@ -1,81 +1,669 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>SHAVE Station — Verteiler</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHAVE · VERTEILER · 6 MOVES</title>
 
-    <!-- Selbe JS-Dateien, selbe Höhe -->
-    <script type="module" src="shell.js"></script>
-    <script type="module" src="gicik.js"></script>
-    <script type="module" src="zwick.js"></script>
-    <script type="module" src="nerdCharm.js"></script>
-    <script type="module" src="nohero.js"></script>
-    <script type="module" src="NC.math"></script>
+<style>
+:root {
+    --bg: #0a0a0f;
+    --fg: #0f0;
+    --gold: #ffd700;
+    --esso: #ff6b6b;
+    --roller: #6bff6b;
+    --kasse: #6b6bff;
+    --door: #ffd93d;
+    --doo: #ff44ff;
+    --shell: #6cf;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Consolas', monospace;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 6px;
+    padding: 10px;
+    overflow: hidden;
+}
 
-    <style>
-        body {
-            background: #0f0f0f;
-            color: #e0e0e0;
-            font-family: monospace;
-            padding: 40px;
-        }
-        .title {
-            font-size: 32px;
-            margin-bottom: 20px;
-        }
-        .log {
-            margin-top: 30px;
-            padding: 20px;
-            background: #1a1a1a;
-            border-left: 4px solid #4af;
-        }
-    </style>
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+header h1 {
+    font-size: 16px;
+    color: var(--gold);
+    letter-spacing: 3px;
+}
+header h1 .shave { color: var(--doo); }
+header h1 .station { color: var(--esso); }
+header h1 .vert { color: var(--shell); }
+#info-bar { font-size: 9px; color: #666; display: flex; gap: 8px; align-items: center; }
+
+main {
+    display: grid;
+    grid-template-columns: 3fr 1.2fr;
+    gap: 6px;
+    height: 100%;
+    min-height: 0;
+}
+
+#canvas-wrap {
+    background: #0a0a0f;
+    border: 1px solid #1a1a2a;
+    border-radius: 10px;
+    padding: 6px;
+    position: relative;
+    overflow: hidden;
+}
+#canvas-wrap canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    display: block;
+}
+#canvas-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 7px;
+    color: #444;
+    pointer-events: none;
+    background: rgba(0,0,0,0.7);
+    padding: 3px 8px;
+    border-radius: 3px;
+}
+#canvas-overlay .shave { color: var(--gold); }
+
+#panel {
+    background: #0a0a0f;
+    border: 1px solid #1a1a2a;
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto;
+    max-height: 100%;
+}
+#panel h3 {
+    font-size: 9px;
+    color: #666;
+    border-bottom: 1px solid #1a1a2a;
+    padding-bottom: 3px;
+}
+
+#moves {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3px;
+}
+.move {
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    padding: 4px 6px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.move:hover {
+    border-color: var(--gold);
+    background: rgba(255,215,61,0.05);
+}
+.move .sym { font-size: 16px; display: block; }
+.move .label { color: #666; font-size: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.move .desc { color: #444; font-size: 5px; }
+.move.active { border-color: var(--gold); background: rgba(255,215,61,0.08); }
+
+#log {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 7px;
+    color: #6a6a8a;
+    line-height: 1.3;
+    min-height: 30px;
+    max-height: 70px;
+    background: #06060a;
+    border-radius: 4px;
+    padding: 3px 5px;
+}
+#log .entry { padding: 1px 0; border-bottom: 1px solid #0a0a12; }
+#log .time { color: #444; }
+#log .msg.esso { color: var(--esso); }
+#log .msg.roller { color: var(--roller); }
+#log .msg.kasse { color: var(--kasse); }
+#log .msg.door { color: var(--door); }
+#log .msg.doo { color: var(--doo); }
+#log .msg.shell { color: var(--shell); }
+#log .msg.shave { color: var(--gold); }
+
+#metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 2px;
+}
+.metric {
+    background: #0e0e1a;
+    border-radius: 3px;
+    padding: 2px 3px;
+    text-align: center;
+    border: 1px solid #1a1a2a;
+}
+.metric .label { color: #666; font-size: 5px; text-transform: uppercase; }
+.metric .value { font-size: 9px; font-weight: bold; }
+.metric.esso .value { color: var(--esso); }
+.metric.roller .value { color: var(--roller); }
+.metric.kasse .value { color: var(--kasse); }
+.metric.shell .value { color: var(--shell); }
+
+#controls {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+}
+button {
+    background: #111;
+    color: var(--fg);
+    border: 1px solid #333;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 8px;
+    transition: all 0.2s;
+}
+button:hover { background: #1a1a2a; border-color: var(--gold); }
+button:active { transform: scale(0.95); }
+button.primary { border-color: var(--gold); color: var(--gold); }
+button.primary:hover { background: var(--gold); color: #000; }
+button.esso { border-color: var(--esso); color: var(--esso); }
+button.esso:hover { background: var(--esso); color: #000; }
+button.roller { border-color: var(--roller); color: var(--roller); }
+button.roller:hover { background: var(--roller); color: #000; }
+button.kasse { border-color: var(--kasse); color: var(--kasse); }
+button.kasse:hover { background: var(--kasse); color: #000; }
+button.doo { border-color: var(--doo); color: var(--doo); }
+button.doo:hover { background: var(--doo); color: #000; }
+button.shell { border-color: var(--shell); color: var(--shell); }
+button.shell:hover { background: var(--shell); color: #000; }
+button.danger { border-color: #f44; color: #f44; }
+button.danger:hover { background: #f44; color: #000; }
+
+@media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    #panel { max-height: 180px; }
+    #moves { grid-template-columns: 1fr 1fr; }
+}
+</style>
 </head>
-
 <body>
 
-<div class="title">SHAVE Station — Verteiler aktiv</div>
+<header>
+    <h1>
+        <span class="shave">✦ SHAVE</span>
+        <span style="color:#666;">·</span>
+        <span class="station">STATION</span>
+        <span style="color:#666;">·</span>
+        <span class="vert">◈ VERTEILER</span>
+    </h1>
+    <div id="info-bar">
+        <span id="clock">⏱️ --:--:--</span>
+        <span id="state-display" style="color:var(--gold);">● bereit</span>
+        <span id="cycle-display" style="color:#666;">SHAVE 0</span>
+    </div>
+</header>
 
-<div class="log" id="log">Starte Mystery‑Verteilung…</div>
+<main>
+    <div id="canvas-wrap">
+        <canvas id="shaveCanvas"></canvas>
+        <div id="canvas-overlay">
+            <span class="shave">✦</span> SHAVE · 6 Moves · Verteiler
+        </div>
+    </div>
 
-<script type="module">
-    import { Shell } from "./shell.js";
-    import { gicik } from "./gicik.js";
-    import { zwick } from "./zwick.js";
-    import { charm } from "./nerdCharm.js";
-    import { nohero } from "./nohero.js";
-    import { calcDistribution } from "./NC.math";
+    <div id="panel">
+        <h3>🎯 6 MOVES · VERTEILER</h3>
 
-    const log = document.getElementById("log");
+        <div id="moves">
+            <div class="move" data-move="ESSO">
+                <span class="sym">⚡</span>
+                <span class="label">ESSO</span>
+                <span class="desc">Primär</span>
+            </div>
+            <div class="move" data-move="ROLLER">
+                <span class="sym">🌀</span>
+                <span class="label">ROLLER</span>
+                <span class="desc">Transport</span>
+            </div>
+            <div class="move" data-move="KASSE">
+                <span class="sym">📦</span>
+                <span class="label">KASSE</span>
+                <span class="desc">Seite</span>
+            </div>
+            <div class="move" data-move="DOOR">
+                <span class="sym">🚪</span>
+                <span class="label">DOOR</span>
+                <span class="desc">Firewall</span>
+            </div>
+            <div class="move" data-move="DOO">
+                <span class="sym">🔑</span>
+                <span class="label">DOO</span>
+                <span class="desc">Freipass</span>
+            </div>
+            <div class="move" data-move="SHELL">
+                <span class="sym">🐚</span>
+                <span class="label">SHELL</span>
+                <span class="desc">Halter</span>
+            </div>
+        </div>
 
-    function out(x) {
-        log.innerHTML += "<br>" + JSON.stringify(x);
+        <div id="metrics">
+            <div class="metric esso"><div class="label">ESSO</div><div class="value" id="esso-value">0</div></div>
+            <div class="metric roller"><div class="label">ROLLER</div><div class="value" id="roller-value">0</div></div>
+            <div class="metric kasse"><div class="label">KASSE</div><div class="value" id="kasse-value">0</div></div>
+            <div class="metric shell"><div class="label">SHELL</div><div class="value" id="shell-value">0</div></div>
+        </div>
+
+        <div id="log">
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg shave">✦ SHAVE · Verteiler · 6 Moves</span></div>
+            <div class="entry"><span class="time">[INIT]</span> <span class="msg shell">🐚 SHELL · Halter aktiv</span></div>
+        </div>
+
+        <div id="controls">
+            <button class="primary" id="btn-start">▶ START</button>
+            <button class="esso" id="btn-esso">⚡ ESSO</button>
+            <button class="roller" id="btn-roller">🌀 ROLLER</button>
+            <button class="kasse" id="btn-kasse">📦 KASSE</button>
+            <button class="doo" id="btn-doo">🔑 DOO</button>
+            <button class="shell" id="btn-shell">🐚 SHELL</button>
+            <button class="danger" id="btn-reset">⟲ RESET</button>
+            <button id="btn-auto">▶ AUTO</button>
+        </div>
+    </div>
+</main>
+
+<script>
+// ============================================================
+// SHAVE · VERTEILER · 6 MOVES
+// ============================================================
+
+// --- MOVES ---
+var MOVES = {
+    ESSO:   { sym: '⚡', label: 'ESSO', desc: 'Primärenergie', color: '#ff6b6b', class: 'esso' },
+    ROLLER: { sym: '🌀', label: 'ROLLER', desc: 'Verbindung', color: '#6bff6b', class: 'roller' },
+    KASSE:  { sym: '📦', label: 'KASSE', desc: 'Seitenenergie', color: '#6b6bff', class: 'kasse' },
+    DOOR:   { sym: '🚪', label: 'DOOR', desc: 'Firewall', color: '#ffd93d', class: 'door' },
+    DOO:    { sym: '🔑', label: 'DOO', desc: 'tmp reg user use', color: '#ff44ff', class: 'doo' },
+    SHELL:  { sym: '🐚', label: 'SHELL', desc: 'Halter', color: '#6cf', class: 'shell' }
+};
+var MOVE_KEYS = ['ESSO', 'ROLLER', 'KASSE', 'DOOR', 'DOO', 'SHELL'];
+
+// --- MYSTERY-VERTEILER ---
+function distribute(move, value) {
+    var map = {
+        ESSO:   { height: 'high', width: 'wide', depth: 'deep' },
+        ROLLER: { height: 'mid', width: 'mid', depth: 'flat' },
+        KASSE:  { height: 'mid', width: 'wide', depth: 'mid' },
+        DOOR:   { height: 'mid', width: 'narrow', depth: 'deep' },
+        DOO:    { height: 'mid', width: 'wide', depth: 'flat' },
+        SHELL:  { height: 'high', width: 'narrow', depth: 'deep' }
+    };
+    return map[move] || { height: 'mystery', width: 'mystery', depth: 'mystery' };
+}
+
+// ============================================================
+// CANVAS SETUP
+// ============================================================
+var canvas = document.getElementById('shaveCanvas');
+var ctx = canvas.getContext('2d');
+var W, H, cx, cy, radius;
+
+function resizeCanvas() {
+    var wrap = document.getElementById('canvas-wrap');
+    var rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    W = canvas.width;
+    H = canvas.height;
+    cx = W / 2;
+    cy = H / 2;
+    radius = Math.min(W, H) * 0.38;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ============================================================
+// STATE
+// ============================================================
+var state = {
+    running: false,
+    autoMode: false,
+    cycle: 0,
+    t: 0,
+    activeMove: 'SHELL',
+    values: {
+        ESSO: 0,
+        ROLLER: 0,
+        KASSE: 0,
+        DOOR: 0,
+        DOO: 0,
+        SHELL: 0
+    }
+};
+
+// ============================================================
+// LOG
+// ============================================================
+function log(msg, type) {
+    var logDiv = document.getElementById('log');
+    var entry = document.createElement('div');
+    entry.className = 'entry';
+    var time = new Date().toLocaleTimeString();
+    var cls = type === 'shave' ? 'shave' : type === 'esso' ? 'esso' :
+              type === 'roller' ? 'roller' : type === 'kasse' ? 'kasse' :
+              type === 'door' ? 'door' : type === 'doo' ? 'doo' :
+              type === 'shell' ? 'shell' : '';
+    entry.innerHTML = '<span class="time">[' + time + ']</span> <span class="msg ' + cls + '">' + msg + '</span>';
+    logDiv.appendChild(entry);
+    logDiv.scrollTop = logDiv.scrollHeight;
+    while (logDiv.children.length > 50) logDiv.removeChild(logDiv.firstChild);
+}
+
+// ============================================================
+// SHAVE KERN
+// ============================================================
+
+function activateMove(key) {
+    state.activeMove = key;
+    var move = MOVES[key];
+    var els = document.querySelectorAll('.move');
+    for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        if (el.getAttribute('data-move') === key) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
     }
 
-    // HÜA HOT START — Verteiler-Impuls
-    const essoOut = Shell.distribute("ESSO");
-    out(essoOut);
+    // Verteilen
+    var dist = distribute(key, state.t);
+    state.values[key] = (state.values[key] || 0) + 1;
 
-    const rollerOut = zwick("ROLLER");
-    out(rollerOut);
+    // Metriken
+    document.getElementById('esso-value').textContent = state.values.ESSO;
+    document.getElementById('roller-value').textContent = state.values.ROLLER;
+    document.getElementById('kasse-value').textContent = state.values.KASSE;
+    document.getElementById('shell-value').textContent = state.values.SHELL;
 
-    const kasseOut = charm("KASSE");
-    out(kasseOut);
+    log(move.sym + ' ' + move.label + ' → ' + dist.height + '/' + dist.width + '/' + dist.depth, move.class);
+}
 
-    const doorOut = gicik("DOOR");
-    out(doorOut);
+function shaveStart() {
+    log('✦ SHAVE · Verteiler aktiv', 'shave');
+    log('⚡ ESSO · Primär', 'esso');
+    log('🌀 ROLLER · Transport', 'roller');
+    log('📦 KASSE · Seite', 'kasse');
+    log('🚪 DOOR · Firewall', 'door');
+    log('🔑 DOO · Freipass', 'doo');
+    log('🐚 SHELL · Halter', 'shell');
+}
 
-    const dooOut = nohero("DOO");
-    out(dooOut);
+// ============================================================
+// RENDER — SHAVE
+// ============================================================
+function render() {
+    ctx.clearRect(0, 0, W, H);
 
-    const shellOut = Shell.distribute("SHELL");
-    out(shellOut);
+    var grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, W * 0.6);
+    grad.addColorStop(0, '#0a0a1a');
+    grad.addColorStop(1, '#000');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
 
-    // Mystery-Berechnung
-    const mysteryCalc = calcDistribution("SHAVE-MYSTERY");
-    out(mysteryCalc);
+    drawShaver();
+    drawMovesRing();
+    drawDistribution();
 
+    state.t += 0.008;
+    if (state.running) {
+        state.cycle++;
+        if (state.cycle % 30 === 0) {
+            var idx = Math.floor(Math.random() * MOVE_KEYS.length);
+            activateMove(MOVE_KEYS[idx]);
+        }
+        document.getElementById('cycle-display').textContent = 'SHAVE ' + state.cycle;
+    }
+
+    requestAnimationFrame(render);
+}
+render();
+
+// ============================================================
+// ZEICHEN-FUNKTIONEN
+// ============================================================
+
+function drawShaver() {
+    var r = radius * 0.45;
+    var angle = state.t * 0.1;
+    var colors = ['#ff6b6b', '#6bff6b', '#6b6bff', '#ffd93d', '#ff44ff', '#6cf'];
+    var labels = ['ESSO', 'ROLLER', 'KASSE', 'DOOR', 'DOO', 'SHELL'];
+
+    for (var i = 0; i < 6; i++) {
+        var a = (i / 6) * Math.PI * 2 + angle;
+        var x = cx + Math.cos(a) * r;
+        var y = cy + Math.sin(a) * r;
+        var isActive = labels[i] === state.activeMove;
+        var val = state.values[labels[i]] || 0;
+
+        var glow = ctx.createRadialGradient(x, y, 0, x, y, 14);
+        glow.addColorStop(0, colors[i] + Math.floor(0.1 + Math.min(val / 10, 0.5)) * 255);
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = isActive ? colors[i] : colors[i] + '44';
+        ctx.lineWidth = isActive ? 2 : 0.5;
+        ctx.shadowColor = isActive ? colors[i] : 'transparent';
+        ctx.shadowBlur = isActive ? 15 : 0;
+        ctx.beginPath();
+        ctx.arc(x, y, 6 + Math.min(val, 8), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = isActive ? colors[i] : '#444';
+        ctx.font = isActive ? '6px Consolas' : '5px Consolas';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(labels[i], x, y - 12);
+
+        ctx.fillStyle = '#333';
+        ctx.font = '4px Consolas';
+        ctx.textBaseline = 'top';
+        ctx.fillText(val, x, y + 8);
+    }
+
+    ctx.fillStyle = 'rgba(255,215,61,0.05)';
+    ctx.font = '8px Consolas';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✦', cx, cy);
+}
+
+function drawMovesRing() {
+    var r = radius * 0.7;
+    var n = 6;
+    var colors = ['#ff6b6b', '#6bff6b', '#6b6bff', '#ffd93d', '#ff44ff', '#6cf'];
+    var labels = ['ESSO', 'ROLLER', 'KASSE', 'DOOR', 'DOO', 'SHELL'];
+
+    for (var i = 0; i < n; i++) {
+        var angle = (i / n) * Math.PI * 2 + state.t * 0.02;
+        var x = cx + Math.cos(angle) * r;
+        var y = cy + Math.sin(angle) * r;
+        var isActive = labels[i] === state.activeMove;
+
+        ctx.fillStyle = isActive ? 'rgba(255,215,61,0.06)' : 'rgba(255,255,255,0.01)';
+        ctx.shadowColor = isActive ? colors[i] : 'transparent';
+        ctx.shadowBlur = isActive ? 8 : 0;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = isActive ? colors[i] : '#222';
+        ctx.font = '5px Consolas';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(labels[i], x, y - 6);
+    }
+}
+
+function drawDistribution() {
+    var keys = ['ESSO', 'ROLLER', 'KASSE', 'DOOR', 'DOO', 'SHELL'];
+    var colors = ['#ff6b6b', '#6bff6b', '#6b6bff', '#ffd93d', '#ff44ff', '#6cf'];
+
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    ctx.fillRect(W - 120, 8, 112, 40);
+
+    for (var i = 0; i < keys.length; i++) {
+        var x = W - 116 + i * 18;
+        var val = state.values[keys[i]] || 0;
+        var h = Math.min(val * 3, 30);
+        ctx.fillStyle = colors[i] + '33';
+        ctx.fillRect(x, 46 - h, 14, h);
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(x, 46 - h, 14, Math.max(2, h));
+        ctx.fillStyle = '#444';
+        ctx.font = '4px Consolas';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(keys[i].substring(0, 2), x + 7, 46 + 2);
+    }
+}
+
+// ============================================================
+// CONTROLS
+// ============================================================
+document.getElementById('btn-start').onclick = function() {
+    state.running = !state.running;
+    this.textContent = state.running ? '⏸ STOP' : '▶ START';
+    document.getElementById('state-display').textContent = state.running ? '● läuft' : '● gestoppt';
+    document.getElementById('state-display').style.color = state.running ? 'var(--gold)' : '#666';
+    if (state.running) shaveStart();
+    log(state.running ? '▶ SHAVE gestartet' : '⏸ SHAVE gestoppt', 'shave');
+};
+
+document.getElementById('btn-esso').onclick = function() { activateMove('ESSO'); };
+document.getElementById('btn-roller').onclick = function() { activateMove('ROLLER'); };
+document.getElementById('btn-kasse').onclick = function() { activateMove('KASSE'); };
+document.getElementById('btn-doo').onclick = function() { activateMove('DOO'); };
+document.getElementById('btn-shell').onclick = function() { activateMove('SHELL'); };
+
+document.getElementById('btn-reset').onclick = function() {
+    state.running = false;
+    state.cycle = 0;
+    state.t = 0;
+    state.activeMove = 'SHELL';
+    state.values = { ESSO: 0, ROLLER: 0, KASSE: 0, DOOR: 0, DOO: 0, SHELL: 0 };
+    document.getElementById('btn-start').textContent = '▶ START';
+    document.getElementById('state-display').textContent = '● reset';
+    document.getElementById('state-display').style.color = '#f44';
+    document.getElementById('cycle-display').textContent = 'SHAVE 0';
+    document.getElementById('esso-value').textContent = '0';
+    document.getElementById('roller-value').textContent = '0';
+    document.getElementById('kasse-value').textContent = '0';
+    document.getElementById('shell-value').textContent = '0';
+    var els = document.querySelectorAll('.move');
+    for (var i = 0; i < els.length; i++) {
+        els[i].classList.remove('active');
+    }
+    activateMove('SHELL');
+    log('⟲ RESET — SHAVE zurückgesetzt', 'shave');
+};
+
+document.getElementById('btn-auto').onclick = function() {
+    state.autoMode = !state.autoMode;
+    this.textContent = state.autoMode ? '⏸ PAUSE' : '▶ AUTO';
+    if (state.autoMode) {
+        state.running = true;
+        document.getElementById('btn-start').textContent = '⏸ STOP';
+        document.getElementById('state-display').textContent = '● auto';
+        document.getElementById('state-display').style.color = 'var(--gold)';
+        if (window.autoInterval) clearInterval(window.autoInterval);
+        window.autoInterval = setInterval(function() {
+            var idx = Math.floor(Math.random() * MOVE_KEYS.length);
+            activateMove(MOVE_KEYS[idx]);
+            log('🔄 ' + MOVE_KEYS[idx] + ' verteilt', 'shave');
+        }, 2000);
+        log('▶ AUTO · SHAVE verteilt', 'shave');
+    } else {
+        clearInterval(window.autoInterval);
+        log('⏸ AUTO pausiert', 'shave');
+    }
+};
+
+// ============================================================
+// MOVE-KLICKS
+// ============================================================
+var moveEls = document.querySelectorAll('.move');
+for (var i = 0; i < moveEls.length; i++) {
+    moveEls[i].onclick = function() {
+        var key = this.getAttribute('data-move');
+        activateMove(key);
+    };
+}
+
+// ============================================================
+// TASTATUR
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === ' ') { e.preventDefault(); document.getElementById('btn-start').click(); }
+    if (e.key === '1') activateMove('ESSO');
+    if (e.key === '2') activateMove('ROLLER');
+    if (e.key === '3') activateMove('KASSE');
+    if (e.key === '4') activateMove('DOOR');
+    if (e.key === '5') activateMove('DOO');
+    if (e.key === '6') activateMove('SHELL');
+    if (e.key === 'x') document.getElementById('btn-reset').click();
+    if (e.key === 'a') document.getElementById('btn-auto').click();
+});
+
+// ============================================================
+// UHR
+// ============================================================
+function updateClock() {
+    document.getElementById('clock').textContent = '⏱️ ' + new Date().toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// INIT
+// ============================================================
+log('✦ SHAVE · Verteiler · 6 Moves', 'shave');
+log('⚡ ESSO · 🔑 DOO · 🐚 SHELL', 'shell');
+log('⌨️  1=ESSO 2=ROLLER 3=KASSE 4=DOOR 5=DOO 6=SHELL', 'shave');
+
+setTimeout(function() {
+    state.running = true;
+    document.getElementById('btn-start').textContent = '⏸ STOP';
+    document.getElementById('state-display').textContent = '● läuft';
+    document.getElementById('state-display').style.color = 'var(--gold)';
+    shaveStart();
+    log('▶ SHAVE automatisch gestartet', 'shave');
+}, 500);
 </script>
-
 </body>
 </html>
